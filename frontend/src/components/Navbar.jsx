@@ -1,6 +1,18 @@
 import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import api from '../api/axios';
 
 function Navbar({ onLogout, token }) {
+  const [userName, setUserName] = useState('');
+
+  useEffect(() => {
+    if (token) {
+      api.get('/users/me').then(res => {
+        setUserName(res.data.full_name || '');
+      }).catch(() => {});
+    }
+  }, [token]);
+
   return (
     <nav style={{
       background: 'linear-gradient(135deg, #013E3F 0%, #028090 100%)',
@@ -40,9 +52,21 @@ function Navbar({ onLogout, token }) {
       </div>
       <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px', alignItems: 'center' }}>
         {token ? (
-          <button onClick={onLogout} style={{ background: 'rgba(255,255,255,0.15)', color: 'white', border: '1px solid rgba(255,255,255,0.3)', padding: '8px 20px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', cursor: 'pointer' }}>
-            Выйти
-          </button>
+          <>
+            {userName && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#02C39A', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '14px', fontWeight: '700' }}>
+                  {userName[0]?.toUpperCase()}
+                </div>
+                <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: '14px', fontWeight: '500' }}>
+                  {userName.split(' ')[0]}
+                </span>
+              </div>
+            )}
+            <button onClick={onLogout} style={{ background: 'rgba(255,255,255,0.15)', color: 'white', border: '1px solid rgba(255,255,255,0.3)', padding: '8px 20px', borderRadius: '8px', fontSize: '14px', fontWeight: '500', cursor: 'pointer' }}>
+              Выйти
+            </button>
+          </>
         ) : (
           <>
             <Link to="/login" style={{ color: 'rgba(255,255,255,0.85)', textDecoration: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '500' }}>

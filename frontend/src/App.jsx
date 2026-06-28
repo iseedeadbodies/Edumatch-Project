@@ -9,6 +9,7 @@ import Chat from './pages/Chat';
 import Dashboard from './pages/Dashboard';
 import ProjectDetail from './pages/ProjectDetail';
 import Teammates from './pages/Teammates';
+import NotFound from './pages/NotFound';
 
 function parseUserId(token) {
   if (!token) return null;
@@ -46,7 +47,7 @@ function App() {
         <Route path="/profile" element={token ? <Profile userId={userId} /> : <Navigate to="/login" />} />
         <Route path="/dashboard" element={token ? <Dashboard userId={userId} /> : <Navigate to="/login" />} />
         <Route path="/teammates" element={token ? <Teammates /> : <Navigate to="/login" />} />
-        <Route path="*" element={<Navigate to={token ? "/projects" : "/login"} />} />
+        <Route path="*" element={token ? <NotFound /> : <Navigate to="/login" />} />
       </Routes>
     </BrowserRouter>
   );

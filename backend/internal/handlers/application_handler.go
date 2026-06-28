@@ -11,10 +11,11 @@ import (
 type ApplicationHandler struct {
 	apps     *repositories.ApplicationRepository
 	projects *repositories.ProjectRepository
+	users    *repositories.UserRepository
 }
 
-func NewApplicationHandler(apps *repositories.ApplicationRepository, projects *repositories.ProjectRepository) *ApplicationHandler {
-	return &ApplicationHandler{apps: apps, projects: projects}
+func NewApplicationHandler(apps *repositories.ApplicationRepository, projects *repositories.ProjectRepository, users *repositories.UserRepository) *ApplicationHandler {
+	return &ApplicationHandler{apps: apps, projects: projects, users: users}
 }
 
 func (h *ApplicationHandler) Apply(c *gin.Context) {
@@ -117,4 +118,38 @@ func (h *ApplicationHandler) updateStatus(c *gin.Context, status string) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"status": status})
+}
+
+func (h *ApplicationHandler) Leave(c *gin.Context) {
+	projectID := c.Param("id")
+	userID := c.GetString("user_id")
+
+	if err := h.apps.DeleteByProjectAndUser(c.Request.Context(), projectID, userID); err != nil {
+		if err == repositories.ErrApplicationNotFound {
+			c.JSON(http.StatusNotFound, gin.H{"error": "заявка не найдена"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ошибка сервера"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "вы вышли из проекта"})
+}
+
+func (h *ApplicationHandler) GetMembers(c *gin.Context) {
+	projectID := c.Param("id")
+
+	userIDs, err := h.apps.GetMembersByProject(c.Request.Context(), projectID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ошибка сервера"})
+		return
+	}
+
+	users, err := h.users.GetByIDs(c.Request.Context(), userIDs)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ошибка сервера"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"members": users})
 }

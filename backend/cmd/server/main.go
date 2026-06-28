@@ -39,7 +39,7 @@ func main() {
 	authHandler := handlers.NewAuthHandler(authSvc)
 	projectHandler := handlers.NewProjectHandler(projectSvc)
 	userHandler := handlers.NewUserHandler(userRepo)
-	appHandler := handlers.NewApplicationHandler(appRepo, projectRepo)
+	appHandler := handlers.NewApplicationHandler(appRepo, projectRepo, userRepo)
 	chatHandler := handlers.NewChatHandler(messageRepo, cfg.JWTSecret)
 
 	router := gin.Default()
@@ -60,7 +60,6 @@ func main() {
 	})
 
 	api := router.Group("/api/v1")
-
 	api.POST("/auth/register", authHandler.Register)
 	api.POST("/auth/login", authHandler.Login)
 
@@ -69,20 +68,22 @@ func main() {
 	{
 		protected.GET("/users/me", userHandler.GetMe)
 		protected.PUT("/users/me", userHandler.UpdateMe)
+		protected.GET("/users", userHandler.ListUsers)
 		protected.GET("/projects", projectHandler.List)
 		protected.POST("/projects", projectHandler.Create)
 		protected.GET("/projects/:id", projectHandler.Get)
 		protected.PUT("/projects/:id", projectHandler.Update)
 		protected.DELETE("/projects/:id", projectHandler.Delete)
 		protected.POST("/projects/:id/apply", appHandler.Apply)
+		protected.DELETE("/projects/:id/leave", appHandler.Leave)
 		protected.GET("/projects/:id/applications", appHandler.GetProjectApplications)
+		protected.GET("/projects/:id/members", appHandler.GetMembers)
 		protected.GET("/projects/:id/messages", chatHandler.GetHistory)
 		protected.GET("/applications/me", appHandler.GetMyApplications)
 		protected.PUT("/applications/:appId/accept", appHandler.Accept)
 		protected.PUT("/applications/:appId/reject", appHandler.Reject)
 	}
 
-	// WebSocket роут — без JWT middleware (токен передаётся в query параметре)
 	router.GET("/ws/projects/:id", chatHandler.HandleWS)
 
 	log.Printf("Сервер запущен на порту %s", cfg.Port)

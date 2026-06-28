@@ -125,3 +125,52 @@ func (r *UserRepository) Update(ctx context.Context, u *models.User) error {
 	_, err := r.db.Exec(ctx, query, u.FullName, u.University, u.Course, u.AboutMe, u.Skills, u.ID)
 	return err
 }
+func (r *UserRepository) GetByIDs(ctx context.Context, ids []string) ([]models.User, error) {
+	if len(ids) == 0 {
+		return []models.User{}, nil
+	}
+	query := `
+		SELECT id, email, password_hash, full_name, university, course,
+		       about_me, avatar_url, skills, rating, created_at
+		FROM users WHERE id = ANY($1)
+	`
+	rows, err := r.db.Query(ctx, query, ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []models.User
+	for rows.Next() {
+		u, err := scanUser(rows)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, *u)
+	}
+	return users, rows.Err()
+}
+func (r *UserRepository) ListUsers(ctx context.Context, skills string) ([]models.User, error) {
+	query := `
+		SELECT id, email, password_hash, full_name, university, course,
+		       about_me, avatar_url, skills, rating, created_at
+		FROM users
+		WHERE ($1 = '' OR $1 = ANY(skills))
+		ORDER BY rating DESC
+	`
+	rows, err := r.db.Query(ctx, query, skills)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []models.User
+	for rows.Next() {
+		u, err := scanUser(rows)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, *u)
+	}
+	return users, rows.Err()
+}

@@ -112,3 +112,36 @@ func (r *ApplicationRepository) GetByID(ctx context.Context, id string) (*models
 	}
 	return &a, nil
 }
+
+func (r *ApplicationRepository) DeleteByProjectAndUser(ctx context.Context, projectID, userID string) error {
+	query := `DELETE FROM applications WHERE project_id = $1 AND user_id = $2`
+	tag, err := r.db.Exec(ctx, query, projectID, userID)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrApplicationNotFound
+	}
+	return nil
+}
+func (r *ApplicationRepository) GetMembersByProject(ctx context.Context, projectID string) ([]string, error) {
+	query := `
+		SELECT user_id FROM applications
+		WHERE project_id = $1 AND status = 'accepted'
+	`
+	rows, err := r.db.Query(ctx, query, projectID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var userIDs []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		userIDs = append(userIDs, id)
+	}
+	return userIDs, rows.Err()
+}

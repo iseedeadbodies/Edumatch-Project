@@ -63,3 +63,12 @@ func (h *UserHandler) UpdateMe(c *gin.Context) {
 
 	c.JSON(http.StatusOK, user)
 }
+func (h *UserHandler) ListUsers(c *gin.Context) {
+	skills := c.Query("skills")
+	users, err := h.users.ListUsers(c.Request.Context(), skills)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ошибка сервера"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"users": users})
+}

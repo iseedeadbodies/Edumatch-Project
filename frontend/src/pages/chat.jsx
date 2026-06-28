@@ -17,7 +17,7 @@ function Chat() {
     });
 
     const token = localStorage.getItem('token');
-    const ws = new WebSocket(`ws://localhost:8080/ws/projects/${id}?token=${token}`);
+    const ws = new WebSocket(`wss://edumatch-project.onrender.com/ws/projects/${id}?token=${token}`);
     wsRef.current = ws;
     ws.onopen = () => setConnected(true);
     ws.onmessage = (e) => {
